@@ -1,0 +1,132 @@
+services:
+  # ─────────────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-brain_game}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-brain_game}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-brain_game}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ─────────────────────────────────────────────
+  # Express Server
+  # ─────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-brain_game}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-brain_game}
+      CORS_ORIGIN: https://${DOMAIN:?DOMAIN is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      RECONNECT_TOKEN_TTL_MINUTES: 1
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ─────────────────────────────────────────────
+  # Nginx (Reverse Proxy)
+  # ─────────────────────────────────────────────
+  client:
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+      args:
+        - VITE_API_URL=https://${DOMAIN:?DOMAIN is required}
+        - VITE_WS_URL=https://${DOMAIN:?DOMAIN is required}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./apps/client/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ─────────────────────────────────────────────
+  # Certbot (Let's Encrypt SSL)
+  # ─────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - backend
+
+# ─────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  certbot_conf:
+    driver: local
+  certbot_www:
+    driver: local
+
+# ─────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────
+networks:
+  backend:
+    driver: bridge

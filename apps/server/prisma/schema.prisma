@@ -1,0 +1,252 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum RoomStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum GameStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PlayerRole {
+  PLAYER
+  SPECTATOR
+}
+
+enum MoveStatus {
+  VALID
+  INVALID
+  UNDO
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+// ─────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  roomPlayers     RoomPlayer[]
+  connections     Connection[]
+  reconnectTokens ReconnectToken[]
+  sentInvites     RoomInvite[] @relation("InviteSender")
+  receivedInvites RoomInvite[] @relation("InviteReceiver")
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// ROOM  (lobby before game starts)
+// ─────────────────────────────────────────────
+
+model Room {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  status    RoomStatus @default(WAITING)
+  createdBy String     @default("") @map("created_by")
+  maxPlayers Int       @default(2) @map("max_players")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  players  RoomPlayer[]
+  game     Game?
+  invites  RoomInvite[]
+
+  @@index([code])
+  @@index([status])
+  @@map("rooms")
+}
+
+// ─────────────────────────────────────────────
+// ROOM PLAYER  (players + future spectators)
+// ─────────────────────────────────────────────
+
+model RoomPlayer {
+  id        String     @id @default(cuid())
+  role      PlayerRole @default(PLAYER)
+  color     String?
+  isReady   Boolean    @default(false) @map("is_ready")
+  joinedAt  DateTime   @default(now()) @map("joined_at")
+  leftAt    DateTime?  @map("left_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  roomId String @map("room_id")
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roomId])
+  @@index([roomId])
+  @@index([userId])
+  @@map("room_players")
+}
+
+// ─────────────────────────────────────────────
+// GAME  (one active game per room)
+// ─────────────────────────────────────────────
+
+model Game {
+  id         String     @id @default(cuid())
+  status     GameStatus @default(PENDING)
+  boardWidth Int        @default(8) @map("board_width")
+  boardHeight Int       @default(8) @map("board_height")
+  winnerId   String?    @map("winner_id")
+  startedAt  DateTime?  @map("started_at")
+  endedAt    DateTime?  @map("ended_at")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  roomId     String   @map("room_id")
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  states     GameState[]
+  moves      Move[]
+
+  @@unique([roomId])
+  @@index([roomId])
+  @@index([status])
+  @@index([winnerId])
+  @@map("games")
+}
+
+// ─────────────────────────────────────────────
+// GAME STATE  (snapshots for replay + reconnect)
+// ─────────────────────────────────────────────
+
+model GameState {
+  id         String   @id @default(cuid())
+  turnNumber Int      @map("turn_number")
+  data       Json     // full board + player states snapshot
+  version    Int      @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  gameId String @map("game_id")
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, turnNumber])
+  @@index([gameId, createdAt])
+  @@map("game_states")
+}
+
+// ─────────────────────────────────────────────
+// MOVE  (every move for full replay history)
+// ─────────────────────────────────────────────
+
+model Move {
+  id          String     @id @default(cuid())
+  turnNumber  Int        @map("turn_number")
+  playerId    String     @map("player_id")
+  action      Json       // { type, from, to, payload }
+  status      MoveStatus @default(VALID)
+  result      Json?      // state diff after move
+  executedAt  DateTime   @default(now()) @map("executed_at")
+
+  gameId String @map("game_id")
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, turnNumber])
+  @@index([gameId, playerId])
+  @@index([gameId, executedAt])
+  @@map("moves")
+}
+
+// ─────────────────────────────────────────────
+// CONNECTION  (active sockets per user)
+// ─────────────────────────────────────────────
+
+model Connection {
+  id         String   @id @default(cuid())
+  socketId   String   @unique @map("socket_id")
+  userAgent  String?  @map("user_agent")
+  ip         String?
+  connectedAt DateTime @default(now()) @map("connected_at")
+  lastPingAt  DateTime @default(now()) @map("last_ping_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([socketId])
+  @@map("connections")
+}
+
+// ─────────────────────────────────────────────
+// RECONNECT TOKEN
+// ─────────────────────────────────────────────
+
+model ReconnectToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  roomId    String   @map("room_id")
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId, roomId])
+  @@map("reconnect_tokens")
+}
+
+// ─────────────────────────────────────────────
+// ROOM INVITE
+// ─────────────────────────────────────────────
+
+model RoomInvite {
+  id        String       @id @default(cuid())
+  status    InviteStatus @default(PENDING)
+  message   String?
+  expiresAt DateTime     @map("expires_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  senderId String @map("sender_id")
+  sender   User   @relation("InviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  receiverId String @map("receiver_id")
+  receiver   User   @relation("InviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  roomId String @map("room_id")
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId, roomId])
+  @@index([roomId])
+  @@index([receiverId])
+  @@index([status])
+  @@map("room_invites")
+}

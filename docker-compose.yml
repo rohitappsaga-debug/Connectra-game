@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5555:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: brain_game
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/brain_game?schema=public
+      PORT: 3001
+      NODE_ENV: production
+      CORS_ORIGIN: http://localhost:5173
+    depends_on:
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+      dockerfile: apps/client/Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:

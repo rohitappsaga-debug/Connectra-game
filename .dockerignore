@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+docker-compose.prod.yml
+
+# Documentation
+*.md
+LICENSE
+
+# Tests
+coverage/
+*.test.*
+*.spec.*
+__tests__/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Prisma
+prisma/migrations/
+
+# Temporary
+tmp/
+temp/
