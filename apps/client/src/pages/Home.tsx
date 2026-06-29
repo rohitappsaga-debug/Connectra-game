@@ -47,9 +47,9 @@ export function Home() {
   if (room) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] gap-10 px-4">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8 sm:gap-10 px-4">
       <div className="text-center max-w-md">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-3 text-gray-900">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 text-gray-900">
           Connectra
         </h1>
         <p className="text-gray-500 text-base">

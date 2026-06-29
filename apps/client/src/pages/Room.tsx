@@ -74,15 +74,15 @@ export function Room() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex flex-col h-[100dvh] sm:h-[calc(100vh-4rem)] max-h-[100dvh] sm:max-h-[calc(100vh-4rem)] overflow-hidden">
       {toast && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg animate-in fade-in duration-200">
+        <div className="absolute top-14 sm:top-16 left-1/2 -translate-x-1/2 z-50 px-3 sm:px-4 py-2 bg-gray-900 text-white text-xs sm:text-sm rounded-lg shadow-lg animate-in fade-in duration-200 max-w-[90vw]">
           {toast}
         </div>
       )}
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-3 shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 shrink-0">
         <div className="w-32" />
         <div className="flex flex-col items-center gap-1">
           <RoomCode code={room.code} />
@@ -98,7 +98,7 @@ export function Room() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 px-4 pb-4 gap-4">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 px-2 sm:px-4 pb-2 sm:pb-4 gap-2 sm:gap-4">
         {/* Mobile Player Header (Hidden on Desktop) */}
         <div className="flex md:hidden flex-col gap-2 shrink-0">
           <div className="flex items-center justify-between gap-2">

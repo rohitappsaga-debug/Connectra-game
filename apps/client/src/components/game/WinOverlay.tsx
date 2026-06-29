@@ -128,26 +128,26 @@ export function WinOverlay() {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
         <div
           className={cn(
-            'bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl px-12 py-10 text-center transform transition-all duration-700',
+            'bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl px-6 py-8 sm:px-12 sm:py-10 text-center transform transition-all duration-700',
             show ? 'scale-100 opacity-100' : 'scale-50 opacity-0',
           )}
         >
-          <div className="text-6xl mb-4">{isWinner ? '🏆' : '🎯'}</div>
+          <div className="text-4xl sm:text-6xl mb-4">{isWinner ? '🏆' : '🎯'}</div>
           <h2
             className={cn(
-              'text-4xl font-bold mb-3',
+              'text-2xl sm:text-4xl font-bold mb-3',
               isWinner ? 'text-yellow-600' : 'text-gray-700',
             )}
           >
             {isWinner ? 'You Won!' : 'You Lost'}
           </h2>
-          <p className="text-gray-400 text-sm mb-8">
+          <p className="text-gray-400 text-xs sm:text-sm mb-6 sm:mb-8">
             {isWinner
               ? 'You connected your nodes across the board!'
               : 'Your opponent connected their nodes first.'}
           </p>
           <div className="flex gap-3 justify-center">
-            <Button onClick={handleLeave} variant="secondary">
+            <Button onClick={handleLeave} variant="secondary" size="sm">
               Back to Home
             </Button>
           </div>
