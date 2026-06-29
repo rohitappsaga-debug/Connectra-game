@@ -10,6 +10,7 @@ import { useSocketActions } from '../hooks/use-socket-actions';
 import { useRoomStore } from '../stores/room-store';
 import { useGameStore } from '../stores/game-store';
 import { useUIStore } from '../stores/ui-store';
+import { cn } from '../lib/utils';
 
 export function Room() {
   const { id } = useParams<{ id: string }>();
