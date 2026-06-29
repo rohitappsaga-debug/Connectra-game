@@ -23,7 +23,7 @@ export function RoomCode({ code, className }: RoomCodeProps) {
     <div className={cn('flex items-center gap-2', className)}>
       <button
         onClick={handleCopy}
-        className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors font-mono text-sm font-semibold tracking-wider shadow-soft"
+        className="flex items-center gap-2 px-3 py-2.5 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-colors font-mono text-sm font-semibold tracking-wider shadow-soft min-h-[44px]"
       >
         {code}
         <svg

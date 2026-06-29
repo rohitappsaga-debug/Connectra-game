@@ -66,7 +66,7 @@ export function Home() {
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
           placeholder="Your name"
-          className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-soft"
+          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-soft min-h-[44px]"
           maxLength={20}
         />
 
@@ -95,7 +95,7 @@ export function Home() {
             value={joinCode}
             onChange={(e) => setJoinCode(e.target.value)}
             placeholder="Room code"
-            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-mono tracking-wider placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-soft"
+            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-mono tracking-wider placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent shadow-soft min-h-[44px]"
             maxLength={6}
           />
           <Button onClick={handleJoin} isLoading={isJoining} variant="secondary" className="w-full" disabled={!joinCode.trim() || !isConnected || !playerName.trim()}>

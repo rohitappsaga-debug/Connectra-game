@@ -6,4 +6,5 @@ body {
   @apply bg-gray-50 text-gray-900 antialiased;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+  padding-bottom: env(safe-area-inset-bottom);
 }

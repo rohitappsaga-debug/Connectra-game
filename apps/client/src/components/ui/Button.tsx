@@ -24,9 +24,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-red-500 hover:bg-red-600 text-white shadow-soft focus:ring-red-400': variant === 'danger',
           },
           {
-            'px-3 py-1.5 text-sm': size === 'sm',
-            'px-5 py-2.5 text-sm': size === 'md',
-            'px-6 py-3 text-base': size === 'lg',
+            'px-3 py-2.5 text-sm min-h-[44px]': size === 'sm',
+            'px-5 py-3 text-sm min-h-[44px]': size === 'md',
+            'px-6 py-3.5 text-base min-h-[48px]': size === 'lg',
           },
           className,
         )}

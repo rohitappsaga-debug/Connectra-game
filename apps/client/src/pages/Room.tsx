@@ -83,7 +83,7 @@ export function Room() {
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 shrink-0">
-        <div className="w-32" />
+        <div className="flex-1" />
         <div className="flex flex-col items-center gap-1">
           <RoomCode code={room.code} />
           {isWaiting && (
@@ -113,7 +113,7 @@ export function Room() {
                   className="!p-2 text-xs"
                 />
               ) : (
-                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-[10px]">
+                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-xs">
                   Waiting...
                 </div>
               )}
@@ -132,7 +132,7 @@ export function Room() {
                   className="!p-2 text-xs"
                 />
               ) : (
-                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-[10px]">
+                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-xs">
                   Waiting for opponent...
                 </div>
               )}
@@ -244,7 +244,7 @@ export function Room() {
                   </svg>
                 </div>
                 <p className="text-xs md:text-sm font-medium text-gray-500">Game board will appear here</p>
-                <p className="text-[10px] md:text-xs mt-1 text-gray-300">
+                <p className="text-xs md:text-xs mt-1 text-gray-300">
                   {isCreator ? 'Start the game when your opponent is ready' : 'Ready up so the creator can start'}
                 </p>
               </div>

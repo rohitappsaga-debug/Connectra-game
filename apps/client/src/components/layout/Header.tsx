@@ -13,13 +13,13 @@ export function Header({ showBack }: HeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md pt-[env(safe-area-inset-top)]">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {showBack && (
             <button
               onClick={() => navigate('/')}
-              className="p-1.5 -ml-1.5 text-gray-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+              className="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
