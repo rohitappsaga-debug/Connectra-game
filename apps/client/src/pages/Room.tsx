@@ -97,9 +97,79 @@ export function Room() {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex min-h-0 px-4 pb-4 gap-4">
-        {/* Left sidebar - Creator */}
-        <div className="w-52 shrink-0 flex flex-col gap-3">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 px-4 pb-4 gap-4">
+        {/* Mobile Player Header (Hidden on Desktop) */}
+        <div className="flex md:hidden flex-col gap-2 shrink-0">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1">
+              {creatorPlayer ? (
+                <PlayerCard
+                  username={creatorPlayer.user?.username || 'Unknown'}
+                  color={creatorPlayer.color}
+                  isReady={creatorPlayer.isReady}
+                  isActive={isPlaying && currentPlayerId === creatorPlayer.userId}
+                  isYou={creatorPlayer.userId === currentUserId}
+                  className="!p-2 text-xs"
+                />
+              ) : (
+                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-[10px]">
+                  Waiting...
+                </div>
+              )}
+            </div>
+            
+            <div className="text-gray-400 font-bold px-1 text-xs shrink-0">VS</div>
+            
+            <div className="flex-1">
+              {joinerPlayer ? (
+                <PlayerCard
+                  username={joinerPlayer.user?.username || 'Unknown'}
+                  color={joinerPlayer.color}
+                  isReady={joinerPlayer.isReady}
+                  isActive={isPlaying && currentPlayerId === joinerPlayer.userId}
+                  isYou={joinerPlayer.userId === currentUserId}
+                  className="!p-2 text-xs"
+                />
+              ) : (
+                <div className="p-2 border border-dashed border-gray-200 rounded-xl text-center text-gray-400 text-[10px]">
+                  Waiting for opponent...
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons / indicators on mobile */}
+          {isWaiting && (
+            <div className="w-full">
+              {isCreator ? (
+                <Button onClick={startGame} disabled={!canStart} className="w-full py-2 text-xs font-semibold" size="sm">
+                  Start Game
+                </Button>
+              ) : (
+                <Button onClick={toggleReady} variant={isReady ? 'secondary' : 'primary'} className="w-full py-2 text-xs font-semibold" size="sm">
+                  {isReady ? 'Not Ready' : 'Ready Up'}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {isPlaying && (
+            <div className="w-full py-2 bg-white border border-gray-200 rounded-xl px-3 flex items-center justify-between shadow-soft">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Turn {currentTurn}
+              </span>
+              <span className={cn(
+                "text-xs font-bold px-2 py-0.5 rounded-lg",
+                currentPlayerId === currentUserId ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+              )}>
+                {currentPlayerId === currentUserId ? "★ Your Turn" : "Opponent's Turn"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Left sidebar (Hidden on Mobile) */}
+        <div className="hidden md:flex w-52 shrink-0 flex-col gap-3">
           <h2 className="text-xs font-medium text-gray-400 uppercase tracking-wider">Players</h2>
           {creatorPlayer ? (
             <PlayerCard
@@ -160,29 +230,29 @@ export function Room() {
         </div>
 
         {/* Game Board */}
-        <div className="relative flex-1 min-w-0 min-h-0 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
-          {isPlaying && <SVGBoard className="h-full" />}
+        <div className="relative flex-1 min-w-0 min-h-0 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden flex flex-col items-center justify-center">
+          {isPlaying && <SVGBoard className="w-full h-full max-h-full max-w-full" />}
           <WinOverlay />
           {isWaiting && (
-            <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="flex items-center justify-center h-full text-gray-400 p-4">
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 md:w-8 md:h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <p className="text-sm font-medium text-gray-500">Game board will appear here</p>
-                <p className="text-xs mt-1 text-gray-300">
+                <p className="text-xs md:text-sm font-medium text-gray-500">Game board will appear here</p>
+                <p className="text-[10px] md:text-xs mt-1 text-gray-300">
                   {isCreator ? 'Start the game when your opponent is ready' : 'Ready up so the creator can start'}
                 </p>
               </div>
             </div>
           )}
           {isComplete && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full p-4">
               <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">
+                <h2 className="text-xl md:text-2xl font-bold mb-2">
                   {winnerId ? (
                     winnerId === currentUserId ? (
                       <span className="text-green-600">You Won!</span>
@@ -193,14 +263,14 @@ export function Room() {
                     'Draw'
                   )}
                 </h2>
-                <Button onClick={() => { localStorage.removeItem('playerName'); navigate('/'); }}>Back to Home</Button>
+                <Button size="sm" onClick={() => { localStorage.removeItem('playerName'); navigate('/'); }}>Back to Home</Button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right sidebar - Joiner */}
-        <div className="w-52 shrink-0 flex flex-col gap-3">
+        {/* Desktop Right sidebar (Hidden on Mobile) */}
+        <div className="hidden md:flex w-52 shrink-0 flex-col gap-3">
           {joinerPlayer ? (
             <PlayerCard
               username={joinerPlayer.user?.username || 'Unknown'}
