@@ -5,7 +5,7 @@ function getEnv(key: string, fallback?: string): string {
   if (value === undefined) {
     throw new Error(`Missing environment variable: ${key}`);
   }
-  return value;
+  return value.trim();
 }
 
 function getEnvInt(key: string, fallback: number): number {
