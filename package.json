@@ -7,7 +7,7 @@
     "dev": "pnpm --filter client --filter server --parallel run dev",
     "dev:client": "pnpm --filter client run dev",
     "dev:server": "pnpm --filter server run dev",
-    "build": "pnpm --filter @connectra/shared run build && pnpm --filter client --filter server run build",
+    "build": "pnpm db:generate && pnpm --filter @connectra/shared run build && pnpm --filter client --filter server run build",
     "build:client": "pnpm --filter client run build",
     "build:server": "pnpm --filter server run build",
     "lint": "eslint .",

@@ -13,7 +13,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/client/node_modules ./apps/client/node_modules
 COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 COPY . .
-RUN pnpm --filter shared build
+RUN pnpm --filter @connectra/shared build
 RUN pnpm --filter client build
 
 FROM nginx:alpine AS runner
