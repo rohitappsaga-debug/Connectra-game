@@ -1,4 +1,4 @@
-import { gameRepo, gameStateRepo, moveRepo, roomPlayerRepo } from '../repositories/index.js';
+import { gameRepo, gameStateRepo, moveRepo, roomPlayerRepo, roomRepo } from '../repositories/index.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { GameEngine } from '../engine/game-engine.js';
@@ -223,6 +223,11 @@ export const gameService = {
         },
       });
 
+      // Touch room updatedAt to track active gameplay and prevent abandonment cleanup
+      await roomRepo.update(cached.roomId, { updatedAt: new Date() }).catch((err) => {
+        logger.error('Failed to update room updatedAt on move', { error: err, roomId: cached.roomId });
+      });
+
       logger.debug('Move processed', {
         gameId,
         playerId,
@@ -252,6 +257,7 @@ export const gameService = {
 
   async finishGame(gameId: string, winnerId: string | null) {
     const cached = getCachedGame(gameId);
+    const roomId = cached?.roomId;
 
     if (winnerId !== null) {
       // Single DB call to set winner and mark complete
@@ -259,6 +265,11 @@ export const gameService = {
       if (cached) {
         cached.isGameOver = true;
         cached.winnerId = winnerId;
+      }
+      if (roomId) {
+        await roomRepo.updateStatus(roomId, 'COMPLETED').catch((err) => {
+          logger.error('Failed to update room status on game finish', { error: err, roomId });
+        });
       }
       gameCache.delete(gameId);
       logger.info('Game finished', { gameId, winnerId });
@@ -269,6 +280,11 @@ export const gameService = {
       if (cached) {
         cached.isGameOver = true;
         cached.winnerId = null;
+      }
+      if (roomId) {
+        await roomRepo.updateStatus(roomId, 'COMPLETED').catch((err) => {
+          logger.error('Failed to update room status on game draw', { error: err, roomId });
+        });
       }
       gameCache.delete(gameId);
       logger.info('Game finished (draw)', { gameId });

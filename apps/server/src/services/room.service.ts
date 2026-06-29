@@ -5,6 +5,7 @@ import { env } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import type { CreateRoomInput } from '../validation/room.schema.js';
 import { gameService } from './game.service.js';
+import { prisma } from '../lib/prisma.js';
 
 const COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b'];
 
@@ -108,14 +109,26 @@ export const roomService = {
   },
 
   async expireRooms() {
-    const expired = await roomRepo.findExpiredRooms(env.room.expirationMinutes);
+    // Purge:
+    // - WAITING rooms older than 30 minutes
+    // - COMPLETED rooms older than 10 minutes (allow time for endgame states)
+    // - IN_PROGRESS rooms older than 30 minutes (abandoned matches)
+    const expired = await roomRepo.findExpiredAndAbandonedRooms(
+      env.room.expirationMinutes,
+      10,
+      30
+    );
     for (const room of expired) {
       const game = gameService.getGameByRoom(room.id);
       if (game) {
         gameService.invalidateCache(game.gameId);
       }
       await roomRepo.delete(room.id);
-      logger.info('Room expired and deleted', { roomId: room.id, code: room.code });
+      logger.info('Room cleaned up and deleted from DB (expired/completed/abandoned)', {
+        roomId: room.id,
+        code: room.code,
+        status: room.status,
+      });
     }
     return expired.length;
   },
@@ -134,6 +147,13 @@ export const roomService = {
 
   async startGame(roomId: string) {
     const room = await roomRepo.updateStatus(roomId, 'IN_PROGRESS');
+
+    // Clean up any stale game for this room to avoid GameToRoom unique relation violation
+    const existingGame = await gameRepo.findByRoomId(roomId);
+    if (existingGame) {
+      await prisma.game.delete({ where: { id: existingGame.id } });
+      logger.info('Deleted existing game for room before starting new one', { roomId, gameId: existingGame.id });
+    }
 
     const game = await gameRepo.create({
       room: { connect: { id: roomId } },

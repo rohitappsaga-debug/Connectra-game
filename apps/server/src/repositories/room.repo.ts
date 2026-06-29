@@ -57,12 +57,18 @@ export const roomRepo = {
     return { rooms, total };
   },
 
-  async findExpiredRooms(expirationMinutes: number) {
-    const cutoff = new Date(Date.now() - expirationMinutes * 60 * 1000);
+  async findExpiredAndAbandonedRooms(waitingTtlMin: number, completedTtlMin: number, inProgressTtlMin: number) {
+    const waitingCutoff = new Date(Date.now() - waitingTtlMin * 60 * 1000);
+    const completedCutoff = new Date(Date.now() - completedTtlMin * 60 * 1000);
+    const inProgressCutoff = new Date(Date.now() - inProgressTtlMin * 60 * 1000);
+
     return prisma.room.findMany({
       where: {
-        status: 'WAITING',
-        createdAt: { lt: cutoff },
+        OR: [
+          { status: 'WAITING', createdAt: { lt: waitingCutoff } },
+          { status: 'COMPLETED', updatedAt: { lt: completedCutoff } },
+          { status: 'IN_PROGRESS', updatedAt: { lt: inProgressCutoff } },
+        ],
       },
       include: ROOM_INCLUDE,
     });

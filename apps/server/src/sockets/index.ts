@@ -373,6 +373,10 @@ export function setupSocketHandlers(io: TypedServer) {
             winnerId: result.winnerId,
             winningPath: gameState?.winCondition?.path,
           });
+          // Complete game status in DB and clear server memory cache
+          await gameService.finishGame(game.gameId, result.winnerId).catch((err) => {
+            logger.error('Failed to finish game in DB', { error: err, gameId: game.gameId });
+          });
         }
 
         callback({ ok: true, data: { moveId: result.moveId, turnNumber: result.turnNumber } });
