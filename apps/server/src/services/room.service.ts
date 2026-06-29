@@ -146,22 +146,46 @@ export const roomService = {
   },
 
   async startGame(roomId: string) {
-    const room = await roomRepo.updateStatus(roomId, 'IN_PROGRESS');
+    // 1. Fetch room defensively to check if it's already in progress
+    const room = await roomRepo.findById(roomId);
+    if (!room) {
+      throw new Error('Room not found');
+    }
 
-    // Clean up any stale game for this room to avoid GameToRoom unique relation violation
+    // 2. If game is already in progress and exists, return it (handles race conditions)
+    if (room.status === 'IN_PROGRESS' && room.game) {
+      logger.info('Game already started for room, returning existing', { roomId, gameId: room.game.id });
+      return { room, game: room.game };
+    }
+
+    // 3. Update room status to IN_PROGRESS
+    const updatedRoom = await roomRepo.updateStatus(roomId, 'IN_PROGRESS');
+
+    // 4. Clean up any stale game for this room to avoid GameToRoom unique relation violation
     const existingGame = await gameRepo.findByRoomId(roomId);
     if (existingGame) {
       await prisma.game.delete({ where: { id: existingGame.id } });
       logger.info('Deleted existing game for room before starting new one', { roomId, gameId: existingGame.id });
     }
 
-    const game = await gameRepo.create({
-      room: { connect: { id: roomId } },
-      boardWidth: 8,
-      boardHeight: 8,
-    });
+    let game;
+    try {
+      game = await gameRepo.create({
+        room: { connect: { id: roomId } },
+        boardWidth: 8,
+        boardHeight: 8,
+      });
+      logger.info('Game started successfully', { roomId, gameId: game.id });
+    } catch (err: any) {
+      logger.warn('Failed to create new game (likely already exists), checking for existing...', { roomId, error: err.message });
+      const existing = await gameRepo.findByRoomId(roomId);
+      if (existing) {
+        game = existing;
+      } else {
+        throw err;
+      }
+    }
 
-    logger.info('Game started', { roomId, gameId: game.id });
-    return { room, game };
+    return { room: updatedRoom, game };
   },
 };
